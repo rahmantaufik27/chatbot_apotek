@@ -33,27 +33,9 @@ class Preprocessing:
         return all_words
 
     def remove_wordstop(self, words):
-        # stopword dari tala
-        sw1_raw = pd.read_csv("https://raw.githubusercontent.com/masdevid/ID-Stopwords/master/id.stopwords.02.01.2016.txt", lineterminator="\n", names=["stopword"], header=None)
-        sw1 = sw1_raw["stopword"].values.tolist()
-        # print(len(sw1))
-
-        # stopword dari sastrawi
-        stop_factory = StopWordRemoverFactory()
-        sw2 = stop_factory.get_stop_words()
-        # print(len(sw2))
-
-        # stopword dari spacy id
-        sw3_raw = Indonesian()
-        sw3_raw = sw3_raw.Defaults.stop_words
-        sw3 = list(sw3_raw)
-        # print(len(sw3))
-
-        # stopword gabungan
-        sw_raw = sw2+sw1+sw3
-        # print(len(sw_raw))
-        sw = list(dict.fromkeys(sw_raw))
-        stopwords_list = sw
+        # # stopword gabungan dari masdevid, sastrawi dan spacy
+        sw = pd.read_csv("dataset/stopwords_combination.txt", lineterminator="\n", names=["stopword"], header=None)
+        stopwords_list = list(dict.fromkeys(sw))
 
         for i in range(len(words)):
             words[i] = [w for w in words[i] if w not in stopwords_list]
@@ -73,7 +55,7 @@ class Preprocessing:
     def pre_process(self, docs):
         text_processed = str(docs)
         text_processed = self.clean_text(text_processed)
-        text_processed = self.stemming_text(text_processed)
+        # text_processed = self.stemming_text(text_processed)
         text_processed = self.tokenize_text(text_processed)
         text_processed = self.remove_wordstop(text_processed)
         text_processed = text_processed[0]
