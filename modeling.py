@@ -12,8 +12,19 @@ class Modeling_rule_based:
         p = p[:p.find('\n')]
         p = p.lower()
         p = re.sub("[^0-9a-z]+", " ", p)
-        p = re.sub("gr",  "gram", p)
-        p = re.sub("ml", "mililiter", p)
+
+        replacements = {
+            '(?<=\s|[0-9])+(g|gr)+(?=\s|\.|$)' : 'gram',
+            '(?<=\s|[0-9])+mg+(?=\s|\.|$)' : 'miligram',
+            '(?<=\s|[0-9])+ml+(?=\s|\.|$)' : 'mililiter',
+            '(?<=\s|[0-9])+l+(?=\s|\.|$)' : 'liter'
+        }
+
+        for key, value in replacements.items():
+            p = re.sub(key, value, p)
+
+        # p = re.sub("gr",  "gram", p)
+        # p = re.sub("ml", "mililiter", p)
         return p
 
     # create question manual
