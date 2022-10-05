@@ -4,7 +4,7 @@ import requests
 import re
 import string
 
-class Rule_based:
+class Modeling_rule_based:
     # get product name manual
     ## filter product name, perlu di regex lagi
     def get_product(self, p):

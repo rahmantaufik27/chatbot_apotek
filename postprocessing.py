@@ -9,7 +9,7 @@ import sys
 class Postprocessing:
     def post_process(self, df):
         try:
-            df.to_json("dataset/chatbot_output.json", orient="table")
+            df.to_json("dataset/chatbot_output_2.json", orient="table")
         except Exception as e:
             print("Output error")
             exit

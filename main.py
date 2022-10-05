@@ -3,7 +3,7 @@ import numpy as np
 
 from preprocessing import Preprocessing
 from postprocessing import Postprocessing
-from modeling import Rule_based
+from modeling import Modeling_rule_based
 
 # 1. LOAD DATASET
 df_raw = pd.read_excel("dataset/Chatbot_node_wording.xlsx")
@@ -15,7 +15,7 @@ print(len(df_raw))
 ## Process per Batch
 batch_size = 100
 pre_processing = Preprocessing()
-rule_based = Rule_based()
+rule_based = Modeling_rule_based()
 df = pd.DataFrame()
 
 for batch_number, batch_df in df_raw.groupby(np.arange(len(df_raw)) // batch_size):
