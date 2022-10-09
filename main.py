@@ -1,44 +1,26 @@
-import pandas as pd
-import numpy as np 
-import json 
-import nltk
-from tensorflow import keras
-from Sastrawi.Stemmer.StemmerFactory import StemmerFactory
+import argparse
 
 from preprocessing import Preprocessing
 from postprocessing import Postprocessing
-from modeling import Modeling_rule_based, Modeling_learning_based
+from modeling import Modeling_rule_based, Modeling_learning_based, Generate_model
 from prediction import Prediction
-#from generate_model import Generate_model 
 
-# GENERATE CORPUS AND MODEL (ANSWERED - QUESTIONS PATTERN)
+parser = argparse.ArgumentParser()
+parser.add_argument('--train_model', action='store_true', help='generate corpus and data model')
+parser.add_argument('--testing_model', action='store_true', help='testing model for question-answers based on data model')
+args = parser.parse_args()
 
-# ANSWER PREDICTION FROM QUESTION (BASED ON MODEL)
-## inisiasi
-model = keras.models.load_model('dataset/data_model')
-data_file = open("dataset/corpus_chatbot_apotek.json").read()
-data = json.loads(data_file)        
-words = []
-classes = []
+if __name__ == '__main__':
 
-for intent in data["intents"]:
-    for pattern in intent["patterns"]:
-        tokens = nltk.word_tokenize(pattern)
-        words.extend(tokens)
+    if args.train_model:
+        # GENERATE CORPUS AND MODEL (ANSWERED - QUESTIONS PATTERN)
+        model = Generate_model()
+        model.generate()
     
-    if intent["tag"] not in classes:
-        classes.append(intent["tag"])
-
-factory = StemmerFactory()
-stemmer = factory.create_stemmer()
-
-words = [stemmer.stem(w) for w in words]
-words = list(dict.fromkeys(words))
-classes = list(dict.fromkeys(classes))
-
-predition = Prediction()
-message = "bagaimana menyimpan erha4"
-intents = predition.pred_class(message, words, classes)
-
-result = predition.get_response(intents, data)
-print(result)
+    elif args.testing_model:
+        # ANSWER PREDICTION FROM QUESTION (BASED ON MODEL)
+        predict_answer = Prediction()
+        #question = "corrective cream 5 10 g"
+        question = "kasih tau cara pake acl dong"
+        res = predict_answer.get_result(question)
+        print(res)
