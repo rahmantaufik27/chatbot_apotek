@@ -1,0 +1,12 @@
+.env
+.venv
+poetry.lock
+/env
+/dataset
+*.pb
+/__pycache__
+**/__pycache__
+*.pyc
+/.vs
+**/.vs
+/ChatterBot

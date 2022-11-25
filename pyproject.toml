@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "erha"
+version = "0.1.0"
+description = ""
+authors = ["redloratech <rede.akbar@loratechai.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+pandas = "^1.5.0"
+SQLAlchemy = "^1.4.41"
+mathparse = "^0.1.2"
+openpyxl = "^3.0.10"
+spacy = "^3.4.1"
+en-core-web-sm = {url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.4.0/en_core_web_sm-3.4.0.tar.gz"}
+Django = "^4.1.2"
+fastapi = "^0.85.1"
+uvicorn = {extras = ["standart"], version = "^0.18.3"}
+
+
+[tool.poetry.group.dev.dependencies]
+chatterbot = {path = "ChatterBot-1.1.0.tar.gz"}
+black = "^22.10.0"
+pylint = "^2.15.4"
+flake8 = "^5.0.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

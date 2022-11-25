@@ -1,0 +1,2 @@
+-r prod_requirements.txt
+ChatterBot-1.1.0.tar.gz
