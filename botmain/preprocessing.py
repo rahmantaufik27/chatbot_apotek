@@ -15,6 +15,7 @@ from Sastrawi.Stemmer.StemmerFactory import StemmerFactory
 class Preprocessing:
     def clean_text(self, texts):
         # text lower case
+        texts = str(texts)
         text_clean = texts.lower()
         # get only alphabet text
         text_clean = re.sub("[^0-9a-z]+", " ", text_clean)

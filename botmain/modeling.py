@@ -124,6 +124,41 @@ class Modeling_rule_based:
 
         return list_all
 
+    # rule for new dataset (worksheet ai erha)
+    def get_solution_df(self, df: pd.DataFrame) -> pd.DataFrame:
+        df.loc[df["Sub Kategori Pertanyaan 1"] == "solution".upper()] = df
+        return df
+
+
+    def filter_solution_df(self, df: pd.DataFrame) -> pd.DataFrame:
+        df.loc[df["Sub Kategori Pertanyaan 1"] != "solution".upper()] = df
+        return df
+
+    def put_service_categories(self, sub: str, listconstants: list):
+        sub = sub.lower()
+
+        CATEGORY_TYPES = ["solution", "product", "program"]
+        replaced = ""
+        for category in listconstants:
+            if sub.find(category) > -1:
+                replaced = sub.replace(category, "").strip()
+                break
+        replaced_list = replaced.split(" ")
+        for type in CATEGORY_TYPES:
+            if type in replaced_list:
+                idx = replaced_list.index(type)
+                result = replaced_list[idx]
+                return result
+        return CATEGORY_TYPES[0]
+
+
+    def put_categories(self, sub: str, listconstants: list):
+        sub = sub.lower()
+
+        for category in listconstants:
+            if sub.find(category) > -1:
+                return category
+
 class Modeling_word2vec:
     def convert_data(self):
         start_time = time.time()
@@ -257,7 +292,7 @@ class Modeling_learning_based:
 
 class Generate_corpus:
     def generate(self):
-        # DATASET RAW PERTAMA
+        # THE FIRST DATASET RAW (chatbot node wording)
         # GENERATE CORPUS (ANSWERED - QUESTIONS PATTERN)
         # LOAD DATASET
         df_raw = pd.read_excel("dataset/Chatbot_node_wording.xlsx")
@@ -291,8 +326,8 @@ class Generate_corpus:
                 ),
                 axis=1,
             )
-            batch_df.loc[batch_df["product_name"] == "", "product_name"] = np.nan
-            batch_df.loc[batch_df["product_name"] == " ", "product_name"] = np.nan
+            batch_df.loc[batch_df["product_name"] == "", "product_name"] = np.NaN
+            batch_df.loc[batch_df["product_name"] == " ", "product_name"] = np.NaN
             batch_df["product_name"].fillna(batch_df["Version ID"], inplace=True)
             batch_df["questions_candidate"] = batch_df.apply(
                 lambda x: rule_based.create_questions(
@@ -315,16 +350,23 @@ class Generate_corpus:
             df = pd.concat([df, batch_df], ignore_index=True)
         # print(len(df))
 
-        # GENERATE CORPUS FROM DATASET (QUESTIONS CANDIDATE)
-        ## transform into json file
+        # GENERATE CORPUS FROM DATASET
+        df["Pertanyaan"] = np.NaN
+        df["product_category"] = np.NaN
+        df["question_category"] = np.NaN
+        df["spec"] = df["product_category"] + df["question_category"] 
         df_res = df[
             [
                 "Version ID",
                 "Content ID",
                 "product_name",
-                "questions_pattern",
+                "Pertanyaan",
                 "Answer 1",
-                "questions_optional_pattern"
+                "questions_pattern",
+                "questions_optional_pattern",
+                "product_category",
+                "question_category",
+                "spec"
             ]
         ]
         df_res = df_res.rename(
@@ -332,14 +374,43 @@ class Generate_corpus:
                 "Version ID": "id",
                 "Content ID": "content",
                 "product_name": "tag",
+                "Answer 1": "Jawaban",
                 "questions_pattern": "patterns",
-                "Answer 1": "responses",
                 "questions_optional_pattern": "optional_patterns"
             }
         )
 
-        # DATASET RAW KEDUA
-        df_res2 = pd.read_excel("dataset/Worksheet AI ERHA extended.xlsx")
+        # THE SECOND DATASET RAW (worksheet ai erha)
+        df2 = pd.read_excel("dataset/Worksheet AI ERHA extended.xlsx")
+        # set for the solution data and non solution data
+        CATEGORIES = [
+            "anti aging",
+            "brightening",
+            "acne care & cure",
+            "hair",
+            "dermatology",
+            "men",
+            "make over",
+            "children",
+            "skin",
+        ]
+        Q_CAT = [
+            "greeting",
+            "directory",
+            "content",
+            "promotion",
+            "innovation",
+            "find us",
+            "closing",
+        ]
+        df_res2_non_sol = rule_based.filter_solution_df(df2)
+        df_res2_non_sol["product_category"] = "bot"
+        df_res2_non_sol["question_category"] = df_res2_non_sol["Sub Kategori Pertanyaan 1"].apply(rule_based.put_categories, listconstants=Q_CAT)
+        df_res2_sol = rule_based.get_solution_df(df2)
+        df_res2_sol["product_category"] = df_res2_sol["Sub Kategori Pertanyaan 2"].apply(rule_based.put_categories, listconstants=CATEGORIES)
+        df_res2_sol["question_category"] = df_res2_sol["Sub Kategori Pertanyaan 2"].apply(rule_based.put_service_categories, listconstants=CATEGORIES)
+        df_res2 = pd.concat([df_res2_non_sol, df_res2_sol])
+
         df_res2["content"] = "general_info"
         df_res2["Sub Kategori Pertanyaan 2"] = df_res2["Sub Kategori Pertanyaan 2"].apply(lambda x: pre_processing.clean_text(x))
         df_res2["questions_optional_pattern"] = df_res2.apply(
@@ -348,6 +419,8 @@ class Generate_corpus:
             ),
             axis=1,
         )
+        df_res2["patterns"] = np.NaN
+        df_res2["spec"] = df_res2["product_category"] + " " + df_res2["question_category"] 
 
         df_res2 = df_res2[
             [
@@ -356,7 +429,11 @@ class Generate_corpus:
                 "Sub Kategori Pertanyaan 2",
                 "Pertanyaan",
                 "Jawaban",
-                "questions_optional_pattern"
+                "patterns",
+                "questions_optional_pattern",
+                "product_category",
+                "question_category",
+                "spec"
             ]
         ]
 
@@ -364,8 +441,6 @@ class Generate_corpus:
             columns={
                 "No": "id",
                 "Sub Kategori Pertanyaan 2": "tag",
-                "Pertanyaan": "patterns",
-                "Jawaban": "responses",
                 "questions_optional_pattern": "optional_patterns"
             }
         )

@@ -1,7 +1,7 @@
 import argparse
 
-from bot_ml.modeling import Generate_model, Generate_corpus, Modeling_word2vec, Modeling_chatterbot
-from bot_ml.prediction import Prediction, Prediction_manual
+from botmain.modeling import Generate_model, Generate_corpus, Modeling_word2vec, Modeling_chatterbot
+from botmain.prediction import Prediction, Prediction_manual
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
