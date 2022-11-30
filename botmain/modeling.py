@@ -33,7 +33,7 @@ class Modeling_rule_based:
         # untuk treatment_info, product name didapatkan dari Version ID
         p = v
         # sedangkan untuk product_info, cek apakah Version ID itu terdiri dari satu suku kata, jika iya lakukan parsing dari data Answer
-        if c == "product_info":
+        if c == "product":
             if " " not in v:
                 p = a
                 p = p[p.find("*") : len(p)]
@@ -62,11 +62,11 @@ class Modeling_rule_based:
         q = product
         # q = version
         list_q = []
-        if c == "product_info":
+        if c == "product":
             q1 = q
             q2 = "pakai " + q
             list_q = [q1, q2]
-        elif c == "treatment_info":
+        elif c == "treatment":
             q1 = q
             q2 = "treatment " + q
             list_q = [q1, q2]
@@ -78,21 +78,21 @@ class Modeling_rule_based:
         q = product
         # q = version
         list_q = []
-        if c == "product_info":
+        if c == "product":
             q1 = q
             q2 = "pakai " + q
             q3 = "kegunaan " + q
             q4 = "penyimpanan " + q
             q5 = "harga " + q
             list_q = [q1, q2, q3, q4, q5]
-        elif c == "treatment_info":
+        elif c == "treatment":
             q1 = q
             q2 = "treatment " + q
             q3 = "pengerjaan " + q
             q4 = "manfaat " + q
             q5 = "harga " + q
             list_q = [q1, q2, q3, q4, q5]
-        elif c == "general_info":
+        elif c == "general":
             q1 = q
             q2 = "apa " + q
             q3 = "informasi " + q
@@ -126,30 +126,31 @@ class Modeling_rule_based:
 
     # rule for new dataset (worksheet ai erha)
     def get_solution_df(self, df: pd.DataFrame) -> pd.DataFrame:
-        df.loc[df["Sub Kategori Pertanyaan 1"] == "solution".upper()] = df
-        return df
+        df_new = pd.DataFrame()
+        df_new = df.loc[df["Sub Kategori Pertanyaan 1"] == "solution".upper()].copy()
+        return df_new
 
 
     def filter_solution_df(self, df: pd.DataFrame) -> pd.DataFrame:
-        df.loc[df["Sub Kategori Pertanyaan 1"] != "solution".upper()] = df
-        return df
+        df_new = pd.DataFrame()
+        df_new = df.loc[df["Sub Kategori Pertanyaan 1"] != "solution".upper()].copy()
+        return df_new
 
-    def put_service_categories(self, sub: str, listconstants: list):
+    def put_service_categories(self, sub: str, listconstants: list, listconstants2: list):
         sub = sub.lower()
 
-        CATEGORY_TYPES = ["solution", "product", "program"]
         replaced = ""
         for category in listconstants:
             if sub.find(category) > -1:
                 replaced = sub.replace(category, "").strip()
                 break
         replaced_list = replaced.split(" ")
-        for type in CATEGORY_TYPES:
+        for type in listconstants2:
             if type in replaced_list:
                 idx = replaced_list.index(type)
                 result = replaced_list[idx]
                 return result
-        return CATEGORY_TYPES[0]
+        return listconstants2[0]
 
 
     def put_categories(self, sub: str, listconstants: list):
@@ -292,6 +293,34 @@ class Modeling_learning_based:
 
 class Generate_corpus:
     def generate(self):
+        # DEFINE CATEGORIES
+        CATEGORIES = [
+            "anti aging",
+            "brightening",
+            "acne care & cure",
+            "hair",
+            "dermatology",
+            "men",
+            "make over",
+            "children",
+            "skin",
+        ]
+        Q_CAT = [
+            "greeting",
+            "directory",
+            "content",
+            "promotion",
+            "innovation",
+            "find us",
+            "closing",
+        ]
+        CATEGORY_TYPES = [
+            "solution", 
+            "product", 
+            "program",
+            "treatment"
+        ]
+        
         # THE FIRST DATASET RAW (chatbot node wording)
         # GENERATE CORPUS (ANSWERED - QUESTIONS PATTERN)
         # LOAD DATASET
@@ -320,6 +349,7 @@ class Generate_corpus:
 
             # MODELING CORPUS BASED ON RULE BASED
             ## training (create corpus for questions), and testing
+            batch_df["Content ID"] = batch_df["Content ID"].apply(lambda x: x.split("_")[0])
             batch_df["product_name"] = batch_df.apply(
                 lambda x: rule_based.get_product(
                     x["Content ID"], x["Answer 1"], x["Version ID"]
@@ -353,65 +383,44 @@ class Generate_corpus:
         # GENERATE CORPUS FROM DATASET
         df["Pertanyaan"] = np.NaN
         df["product_category"] = np.NaN
-        df["question_category"] = np.NaN
-        df["spec"] = df["product_category"] + df["question_category"] 
+        df["spec"] = df["product_category"] + df["Content ID"] 
         df_res = df[
             [
                 "Version ID",
-                "Content ID",
                 "product_name",
                 "Pertanyaan",
                 "Answer 1",
                 "questions_pattern",
                 "questions_optional_pattern",
+                "Content ID",
                 "product_category",
-                "question_category",
-                "spec"
+                "spec",
             ]
         ]
         df_res = df_res.rename(
             columns={
                 "Version ID": "id",
-                "Content ID": "content",
                 "product_name": "tag",
                 "Answer 1": "Jawaban",
                 "questions_pattern": "patterns",
-                "questions_optional_pattern": "optional_patterns"
+                "questions_optional_pattern": "optional_patterns",
+                "Content ID": "question_category",
             }
         )
 
         # THE SECOND DATASET RAW (worksheet ai erha)
         df2 = pd.read_excel("dataset/Worksheet AI ERHA extended.xlsx")
         # set for the solution data and non solution data
-        CATEGORIES = [
-            "anti aging",
-            "brightening",
-            "acne care & cure",
-            "hair",
-            "dermatology",
-            "men",
-            "make over",
-            "children",
-            "skin",
-        ]
-        Q_CAT = [
-            "greeting",
-            "directory",
-            "content",
-            "promotion",
-            "innovation",
-            "find us",
-            "closing",
-        ]
         df_res2_non_sol = rule_based.filter_solution_df(df2)
         df_res2_non_sol["product_category"] = "bot"
         df_res2_non_sol["question_category"] = df_res2_non_sol["Sub Kategori Pertanyaan 1"].apply(rule_based.put_categories, listconstants=Q_CAT)
         df_res2_sol = rule_based.get_solution_df(df2)
+        df_res2_sol = df_res2_sol.dropna(subset="Sub Kategori Pertanyaan 2")
         df_res2_sol["product_category"] = df_res2_sol["Sub Kategori Pertanyaan 2"].apply(rule_based.put_categories, listconstants=CATEGORIES)
-        df_res2_sol["question_category"] = df_res2_sol["Sub Kategori Pertanyaan 2"].apply(rule_based.put_service_categories, listconstants=CATEGORIES)
+        df_res2_sol["question_category"] = df_res2_sol["Sub Kategori Pertanyaan 2"].apply(rule_based.put_service_categories, listconstants=CATEGORIES, listconstants2=CATEGORY_TYPES)
         df_res2 = pd.concat([df_res2_non_sol, df_res2_sol])
 
-        df_res2["content"] = "general_info"
+        df_res2["content"] = "general"
         df_res2["Sub Kategori Pertanyaan 2"] = df_res2["Sub Kategori Pertanyaan 2"].apply(lambda x: pre_processing.clean_text(x))
         df_res2["questions_optional_pattern"] = df_res2.apply(
             lambda x: rule_based.create_optional_questions(
@@ -425,14 +434,14 @@ class Generate_corpus:
         df_res2 = df_res2[
             [
                 "No",
-                "content",
+                # "content",
                 "Sub Kategori Pertanyaan 2",
                 "Pertanyaan",
                 "Jawaban",
                 "patterns",
                 "questions_optional_pattern",
-                "product_category",
                 "question_category",
+                "product_category",
                 "spec"
             ]
         ]
