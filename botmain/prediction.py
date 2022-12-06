@@ -75,9 +75,9 @@ class Prediction:
             for i in list_of_intents:
                 if i["tag"] == tag:
                     print(i["id"])
-                    print(i["content"])
+                    print(i["question_category"])
                     print(i["tag"])
-                    result = str(i["responses"])
+                    result = str(i["Jawaban"])
                     break    
 
         return result, success
@@ -130,10 +130,10 @@ class Prediction_manual:
         df = df.reset_index()
         # print(df[["tag", "temp_question", "similar_answer_by_count_words"]].head())
         print(str(df["id"][0]))
-        print(str(df["content"][0]))
+        print(str(df["question_category"][0]))
         print(str(df["tag"][0]))
         res = ""
-        res = str(df["responses"][0])
+        res = str(df["Jawaban"][0])
         del df
         gc.collect()
         return res

@@ -7,6 +7,7 @@ import io
 from datetime import timedelta
 import json
 import tensorflow as tf
+import os; os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 from keras import Sequential
 from keras.layers import Dense, Dropout
 from Sastrawi.Stemmer.StemmerFactory import StemmerFactory
@@ -428,7 +429,7 @@ class Generate_corpus:
             ),
             axis=1,
         )
-        df_res2["patterns"] = np.NaN
+        df_res2["patterns"] = [[]] * df_res2.shape[0]
         df_res2["spec"] = df_res2["product_category"] + " " + df_res2["question_category"] 
 
         df_res2 = df_res2[
